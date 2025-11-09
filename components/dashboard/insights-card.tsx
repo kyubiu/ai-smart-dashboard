@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Sparkles, Loader2, RefreshCw } from "lucide-react";
 import { useState } from "react";
+import { API_ENDPOINTS } from "@/lib/api-config";
 
 export function InsightsCard() {
   const { data, insights, loading, setInsights, setLoading, setError } =
@@ -19,7 +20,7 @@ export function InsightsCard() {
     setError(null);
 
     try {
-      const response = await fetch("/api/insights", {
+      const response = await fetch(API_ENDPOINTS.insights, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -28,13 +29,19 @@ export function InsightsCard() {
       });
 
       if (!response.ok) {
-        throw new Error("Failed to generate insights");
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(
+          errorData.detail || errorData.error || "Failed to generate insights"
+        );
       }
 
       const result = await response.json();
       setInsights(result.insights);
     } catch (error: any) {
-      setError(error.message || "Failed to generate insights");
+      const errorMessage =
+        error.message ||
+        "Failed to generate insights. Make sure the backend is running.";
+      setError(errorMessage);
       console.error("Error generating insights:", error);
     } finally {
       setGenerating(false);

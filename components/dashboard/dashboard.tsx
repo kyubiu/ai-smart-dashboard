@@ -6,10 +6,12 @@ import { DataUpload } from "./data-upload";
 import { DataTable } from "./data-table";
 import { InsightsCard } from "./insights-card";
 import { Charts } from "./charts";
+import { BackendStatus } from "./backend-status";
 import { useDataStore } from "@/store/data-store";
 import { Button } from "@/components/ui/button";
 import { Download, FileText } from "lucide-react";
 import { useState } from "react";
+import { API_ENDPOINTS } from "@/lib/api-config";
 
 export function Dashboard() {
   const { data, insights } = useDataStore();
@@ -20,7 +22,7 @@ export function Dashboard() {
 
     setGeneratingReport(true);
     try {
-      const response = await fetch("/api/report", {
+      const response = await fetch(API_ENDPOINTS.report, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -32,7 +34,10 @@ export function Dashboard() {
       });
 
       if (!response.ok) {
-        throw new Error("Failed to generate report");
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(
+          errorData.detail || errorData.error || "Failed to generate report"
+        );
       }
 
       const result = await response.json();
@@ -48,9 +53,15 @@ export function Dashboard() {
       a.click();
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error downloading report:", error);
-      alert("Failed to generate report. Please try again.");
+      alert(
+        error.message?.includes("fetch")
+          ? "Cannot connect to backend. Please make sure the FastAPI backend is running on port 8000."
+          : `Failed to generate report: ${
+              error.message || "Unknown error"
+            }. Please try again.`
+      );
     } finally {
       setGeneratingReport(false);
     }
@@ -66,9 +77,12 @@ export function Dashboard() {
             <div className="flex items-center justify-between">
               <div>
                 <h1 className="text-3xl font-bold gradient-text">Dashboard</h1>
-                <p className="text-muted-foreground mt-1">
-                  Upload and analyze your business data with AI
-                </p>
+                <div className="flex items-center space-x-4 mt-1">
+                  <p className="text-muted-foreground">
+                    Upload and analyze your business data with AI
+                  </p>
+                  <BackendStatus />
+                </div>
               </div>
               {data && insights && (
                 <Button

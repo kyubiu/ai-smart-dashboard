@@ -15,6 +15,7 @@ A modern, GPT-powered analytics web application that allows users to upload busi
 ## 🛠️ Tech Stack
 
 - **Frontend**: Next.js 14 (App Router), TypeScript, Tailwind CSS
+- **Backend**: FastAPI (Python)
 - **State Management**: Zustand
 - **Data Fetching**: React Query (TanStack Query)
 - **Charts**: Recharts
@@ -29,6 +30,7 @@ A modern, GPT-powered analytics web application that allows users to upload busi
 ### Prerequisites
 
 - Node.js 18+ and npm/yarn/pnpm
+- Python 3.8+ (for FastAPI backend)
 - OpenAI API key
 - (Optional) GitHub OAuth credentials
 - (Optional) Email server credentials for email authentication
@@ -52,7 +54,63 @@ A modern, GPT-powered analytics web application that allows users to upload busi
    pnpm install
    ```
 
-3. **Set up environment variables**
+3. **Set up Backend (FastAPI)**
+
+   Navigate to the backend directory:
+
+   ```bash
+   cd backend
+   ```
+
+   Create a virtual environment (recommended):
+
+   ```bash
+   python -m venv venv
+
+   # On Windows
+   venv\Scripts\activate
+
+   # On macOS/Linux
+   source venv/bin/activate
+   ```
+
+   Install Python dependencies:
+
+   ```bash
+   pip install -r requirements.txt
+   ```
+
+   Set up backend environment variables:
+
+   ```bash
+   cp .env.example .env
+   ```
+
+   Edit `backend/.env` and add your OpenAI API key:
+
+   ```env
+   OPENAI_API_KEY=your-openai-api-key-here
+   ```
+
+   Start the FastAPI backend:
+
+   ```bash
+   uvicorn main:app --reload --host 0.0.0.0 --port 8000
+   ```
+
+   The backend will be available at `http://localhost:8000`
+
+   - API Docs: http://localhost:8000/docs
+
+4. **Set up Frontend (Next.js)**
+
+   Return to the root directory:
+
+   ```bash
+   cd ..
+   ```
+
+   Set up frontend environment variables:
 
    Copy `.env.example` to `.env.local`:
 
@@ -66,7 +124,9 @@ A modern, GPT-powered analytics web application that allows users to upload busi
    # Required
    NEXTAUTH_URL=http://localhost:3000
    NEXTAUTH_SECRET=your-nextauth-secret-here
-   OPENAI_API_KEY=your-openai-api-key-here
+
+   # Backend API URL (optional, defaults to http://localhost:8000)
+   NEXT_PUBLIC_API_URL=http://localhost:8000
 
    # Optional - GitHub OAuth
    GITHUB_CLIENT_ID=your-github-client-id
@@ -80,15 +140,13 @@ A modern, GPT-powered analytics web application that allows users to upload busi
    EMAIL_FROM=noreply@example.com
    ```
 
-4. **Generate NextAuth Secret**
-
-   You can generate a secret using:
+   Generate NextAuth Secret:
 
    ```bash
    openssl rand -base64 32
    ```
 
-5. **Run the development server**
+5. **Run the frontend development server**
 
    ```bash
    npm run dev
@@ -102,17 +160,23 @@ A modern, GPT-powered analytics web application that allows users to upload busi
 
    Navigate to [http://localhost:3000](http://localhost:3000)
 
+   **Note**: Make sure both the FastAPI backend (port 8000) and Next.js frontend (port 3000) are running.
+
 ## 📁 Project Structure
 
 ```
 ai-smart-dashboard/
+├── backend/                        # FastAPI Backend
+│   ├── main.py                     # FastAPI application
+│   ├── requirements.txt            # Python dependencies
+│   ├── .env.example               # Backend environment template
+│   ├── README.md                  # Backend documentation
+│   ├── run.sh                      # Linux/Mac startup script
+│   └── run.bat                     # Windows startup script
 ├── app/
 │   ├── api/
-│   │   ├── auth/
-│   │   │   └── [...nextauth]/     # NextAuth configuration
-│   │   ├── chat/                   # Chat API endpoint
-│   │   ├── insights/               # Insights API endpoint
-│   │   └── report/                 # Report generation API
+│   │   └── auth/
+│   │       └── [...nextauth]/     # NextAuth configuration
 │   ├── analytics/                  # Analytics page
 │   ├── chat/                       # Chat page
 │   ├── reports/                    # Reports page
@@ -138,8 +202,8 @@ ai-smart-dashboard/
 │       ├── input.tsx
 │       └── tabs.tsx
 ├── lib/
+│   ├── api-config.ts               # API configuration
 │   ├── data-parser.ts              # CSV/XLSX parsing utilities
-│   ├── openai.ts                   # OpenAI API integration
 │   └── utils.ts                    # Utility functions
 ├── store/
 │   └── data-store.ts               # Zustand store for data management
@@ -192,23 +256,57 @@ The app supports two authentication methods:
 
 ## 🚢 Deployment
 
-### Deploy to Vercel
+### Frontend Deployment (Vercel)
 
 1. Push your code to GitHub
 2. Import your repository in Vercel
-3. Add environment variables in Vercel dashboard
+3. Add environment variables in Vercel dashboard:
+   - `NEXTAUTH_URL` (your production URL)
+   - `NEXTAUTH_SECRET`
+   - `NEXT_PUBLIC_API_URL` (your FastAPI backend URL)
+   - OAuth credentials (if using)
 4. Deploy!
 
-The app is optimized for Vercel deployment with Next.js 14.
+The frontend is optimized for Vercel deployment with Next.js 14.
+
+### Backend Deployment (FastAPI)
+
+The FastAPI backend can be deployed to various platforms:
+
+**Option 1: Railway / Render / Fly.io**
+
+- Push backend code to repository
+- Set environment variables (OPENAI_API_KEY)
+- Deploy with platform-specific configuration
+
+**Option 2: Docker**
+
+```bash
+cd backend
+docker build -t ai-dashboard-backend .
+docker run -p 8000:8000 -e OPENAI_API_KEY=your-key ai-dashboard-backend
+```
+
+**Option 3: Traditional Server**
+
+- Use Gunicorn with Uvicorn workers
+- Set up reverse proxy (Nginx)
+- Configure environment variables
 
 ### Environment Variables for Production
 
-Make sure to set all required environment variables in your production environment:
+**Frontend:**
 
 - `NEXTAUTH_URL` (your production URL)
 - `NEXTAUTH_SECRET`
-- `OPENAI_API_KEY`
+- `NEXT_PUBLIC_API_URL` (your FastAPI backend URL)
 - OAuth credentials (if using)
+
+**Backend:**
+
+- `OPENAI_API_KEY` (required)
+- `HOST` (optional, default: 0.0.0.0)
+- `PORT` (optional, default: 8000)
 
 ## 📝 Usage
 

@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { MessageSquare, Send, Loader2, User, Bot } from "lucide-react";
+import { API_ENDPOINTS } from "@/lib/api-config";
 
 interface Message {
   role: "user" | "assistant";
@@ -36,7 +37,7 @@ export function ChatPanel() {
     setLoading(true);
 
     try {
-      const response = await fetch("/api/chat", {
+      const response = await fetch(API_ENDPOINTS.chat, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -48,7 +49,10 @@ export function ChatPanel() {
       });
 
       if (!response.ok) {
-        throw new Error("Failed to get response");
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(
+          errorData.detail || errorData.error || "Failed to get response"
+        );
       }
 
       const result = await response.json();
@@ -60,7 +64,11 @@ export function ChatPanel() {
     } catch (error: any) {
       const errorMessage: Message = {
         role: "assistant",
-        content: "Sorry, I encountered an error. Please try again.",
+        content: error.message?.includes("fetch")
+          ? "Cannot connect to backend. Please make sure the FastAPI backend is running on port 8000."
+          : `Sorry, I encountered an error: ${
+              error.message || "Unknown error"
+            }. Please try again.`,
       };
       setMessages((prev) => [...prev, errorMessage]);
       console.error("Error sending message:", error);

@@ -1,0 +1,31 @@
+@echo off
+REM FastAPI Backend Startup Script for Windows
+
+echo Starting AI Smart Dashboard Backend...
+
+REM Check if virtual environment exists
+if not exist "venv" (
+    echo Creating virtual environment...
+    python -m venv venv
+)
+
+REM Activate virtual environment
+call venv\Scripts\activate.bat
+
+REM Install dependencies if needed
+if not exist "venv\.installed" (
+    echo Installing dependencies...
+    pip install -r requirements.txt
+    type nul > venv\.installed
+)
+
+REM Check if .env exists
+if not exist ".env" (
+    echo Warning: .env file not found. Please create one from .env.example
+)
+
+REM Start the server
+echo Starting FastAPI server on http://localhost:8000
+uvicorn main:app --reload --host 0.0.0.0 --port 8000
+
+
